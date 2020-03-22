@@ -57,10 +57,16 @@ async function openFile(mainWindow :Electron.BrowserWindow): Promise<void> {
 
   try {
     await readZip(filePath);
+    await dialog.showMessageBox(mainWindow, {
+      title: "success",
+      message: "Despide the error the file was unzipped",
+      type: "info"
+     });
   } catch(e) {
     await dialog.showMessageBox(mainWindow, {
-      message: e.message
-     })
+      message: e.message,
+      type: "error"
+     });
   }
 }
 
@@ -72,7 +78,8 @@ function createMenu(mainWindow :Electron.BrowserWindow) {
       label: "File",
       submenu: [
         { label: "Open File", accelerator: "CmdOrCtrl+O", click:() => openFile(mainWindow)},
-        { role: "quit"}
+        { role: "quit"},
+        {role: "toggleDevTools"}
       ]
     }),
     // { role: 'editMenu' }
