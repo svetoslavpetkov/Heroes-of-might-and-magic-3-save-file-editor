@@ -5,6 +5,7 @@ import { v4 as newUuid } from "uuid"
 import * as path from "path";
 import {InitTray} from './trayWindow';
 import { createDir, moveFile } from "./file-util";
+import { unzip } from "./zip"
 
 let mainWindow: Electron.BrowserWindow | null;
 
@@ -33,12 +34,13 @@ async function readZip(filePath:string) {
   
   await moveFile(filePath, copiedFile);
   //file moved
-  const readStream = fs.createReadStream(copiedFile);
-  const writeStream = fs.createWriteStream(extractPath);
+  // const readStream = fs.createReadStream(copiedFile);
+  // const writeStream = fs.createWriteStream(extractPath);
 
-  const unzip = zlib.createGunzip({  });
+  // const unzip = zlib.createGunzip({  });
 
-  readStream.pipe(unzip).pipe(writeStream);
+  // readStream.pipe(unzip).pipe(writeStream);
+  await unzip(copiedFile, extractPath);
 }
 
 async function openFile(mainWindow :Electron.BrowserWindow): Promise<void> {
