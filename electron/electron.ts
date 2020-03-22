@@ -4,27 +4,9 @@ import * as zlib from "zlib"
 import { v4 as newUuid } from "uuid"
 import * as path from "path";
 import {InitTray} from './trayWindow';
-import { resolve } from "dns";
-import { rejects } from "assert";
+import { createDir, moveFile } from "./file-util";
 
 let mainWindow: Electron.BrowserWindow | null;
-
-async function createDir(dirPath:string) {
-  return new Promise((resolve, reject) => {
-    fs.mkdir(dirPath,(err) => { 
-      if(err) {
-        reject(err.message);
-      } else {
-        fs.chmod(dirPath, "0666", (err) => {
-          if(err) {
-            reject(err.message);
-          }
-          resolve(); 
-        })
-      }
-    });
-  });
-}
 
 async function createExtractPath(filePath:string): Promise<string> {
   const uuid = newUuid();
@@ -45,10 +27,13 @@ async function createExtractPath(filePath:string): Promise<string> {
 
 async function readZip(filePath:string) {
   const extractPath = await createExtractPath(filePath);
+  const inputFileParsed = path.parse(filePath);
 
-  console.log("extract path:" + extractPath);
-  const readStream = fs.createReadStream(filePath);
-  console.log("read stream");
+  const copiedFile = path.join(extractPath, `${inputFileParsed.name}.zip`);
+  
+  await moveFile(filePath, copiedFile);
+  //file moved
+  const readStream = fs.createReadStream(copiedFile);
   const writeStream = fs.createWriteStream(extractPath);
 
   const unzip = zlib.createGunzip({  });
