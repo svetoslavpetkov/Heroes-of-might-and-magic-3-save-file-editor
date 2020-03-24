@@ -4,43 +4,21 @@ import * as zlib from "zlib"
 import { v4 as newUuid } from "uuid"
 import * as path from "path";
 import {InitTray} from './trayWindow';
-import { createDir, moveFile } from "./file-util";
+import { createDir, moveFile, readFile } from "./file-util";
 import { unzip } from "./zip"
+import { FileContext } from "./fileContext";
+import { AdapterFactory }  from "./adapters/factory"
 
 let mainWindow: Electron.BrowserWindow | null;
+let currentOpenFileContext: FileContext;
 
-async function createExtractPath(filePath:string): Promise<string> {
-  const uuid = newUuid();
 
-  const baseDirName = path.dirname(filePath);
-
-  const saveGameEditorDir = path.join(baseDirName, "SaveGameEditor");
-
-  if(!fs.existsSync(saveGameEditorDir)) {
-    console.log("creating savegame base dir" + saveGameEditorDir);
-    await createDir(saveGameEditorDir);
-  }
-  const extractPath =  path.join(saveGameEditorDir, uuid);
-
-  await createDir(extractPath);
-  return extractPath;
-}
-
-async function readZip(filePath:string) {
-  const extractPath = await createExtractPath(filePath);
-  const inputFileParsed = path.parse(filePath);
-
-  const copiedFile = path.join(extractPath, `${inputFileParsed.name}.zip`);
+async function readZip(fileContext:FileContext) {
+  await createDir(fileContext.tempDirPath);
   
-  await moveFile(filePath, copiedFile);
-  //file moved
-  // const readStream = fs.createReadStream(copiedFile);
-  // const writeStream = fs.createWriteStream(extractPath);
+  await moveFile(fileContext.originalFilePath, fileContext.tempZipPath);
 
-  // const unzip = zlib.createGunzip({  });
-
-  // readStream.pipe(unzip).pipe(writeStream);
-  await unzip(copiedFile, extractPath);
+  await unzip(fileContext.tempZipPath, fileContext.tempDirPath);
 }
 
 async function openFile(mainWindow :Electron.BrowserWindow): Promise<void> {
@@ -55,13 +33,18 @@ async function openFile(mainWindow :Electron.BrowserWindow): Promise<void> {
 
   const filePath = openFileResult.filePaths[0];
 
+  currentOpenFileContext = new FileContext(filePath);
+
   try {
-    await readZip(filePath);
+    await readZip(currentOpenFileContext);
     await dialog.showMessageBox(mainWindow, {
       title: "success",
       message: "Despide the error the file was unzipped",
       type: "info"
      });
+     const fileBinary = await readFile(currentOpenFileContext.extractedFilePath);
+     const adapter = AdapterFactory.getInstance();
+     adapter.readData(fileBinary);
   } catch(e) {
     await dialog.showMessageBox(mainWindow, {
       message: e.message,

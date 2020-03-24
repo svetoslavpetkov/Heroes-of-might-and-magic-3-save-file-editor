@@ -14,7 +14,7 @@ const moveFile = async function(source:string, target: string) {
 
 const createDir = async function(dirPath:string) {
     return new Promise((resolve, reject) => {
-      fs.mkdir(dirPath,(err) => { 
+      fs.mkdir(dirPath, {recursive: true},(err) => { 
         if(err) {
           reject(err.message);
         } else {
@@ -29,8 +29,20 @@ const createDir = async function(dirPath:string) {
     });
   }
 
+  const readFile = async function(path:string):Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      fs.readFile(path, (err,data)=> {
+        if(err) {
+          reject(err.message);
+        } else {
+          resolve(data);
+        }
+      });
+    });
+  }
 
   export {
       createDir,
       moveFile,
+      readFile,
   }
