@@ -1,10 +1,13 @@
 import { IFileAdapter } from "./abstraction";
-import { Map } from "../model/model"
+import { Map, PrimarySkills, Hero } from "../model/model"
+import { saveTextFile } from "../file-util"
 
 export class DefaultAdapter implements IFileAdapter {
 
     getHeroNames(): Array<string> {
-        return ["Orrin",
+
+        return ["Solmyr", "Fafner", "Daremyth"];
+       /* return ["Orrin",
         "Valeska",
         "Edric",
         "Sylvia",
@@ -164,34 +167,60 @@ export class DefaultAdapter implements IFileAdapter {
         "Zilare",
         "Astra",
         "Dargem",
-        "Giselle"];
+        "Giselle"];*/
     }
 
     readData(buffer:Buffer): Map {
         const text = buffer.toString("ascii");
+
+        saveTextFile("C:\\Games\\HoMM 3 Complete\\Games\\SaveGameEditor\\RawText\\output", text);
         console.log("start searching for heroes");
-        this.getHeroNames().forEach(heroName => {
-            const posittions: Array<number> = []; 
+
+        const heroes:Array<Hero> = [];
+        this.getHeroNames().forEach(heroName => { 
             let indexOf = 0;
             while (indexOf >= 0) {
-                indexOf = text.indexOf(heroName, indexOf + 8);
+                indexOf = text.indexOf(heroName, indexOf + 20);
                 if (indexOf > 0) {
-                    posittions.push(indexOf);
+                    const hero = this.readHero(indexOf, heroName, buffer);
+                    heroes.push(hero);
                 } else {
                     break;
                 }
             }
-
-            if (posittions.length === 0 ){
-                console.log(`Hero ${heroName.padEnd(20)} NOT FOUND`);
-            } else {
-                console.log(`Hero ${heroName.padEnd(20)} at positions: ${posittions.join(", ")}`);
-            }
         });
 
-        console.log("end searching for heroes");
+        
+
+        console.log(JSON.stringify(heroes));
 
         return new Map();
+    }
+
+
+    readHero(heroIndex:number,heroName: string ,buffer:Buffer): Hero {
+        const primarySkills = this.readPrimarySkills(heroIndex, buffer);
+        
+        return new Hero(heroIndex, heroName, primarySkills);
+    }
+
+
+    readPrimarySkills(heroIndex:number, buffer:Buffer): PrimarySkills {
+        const primarySkillsOffset = 69;
+
+        const result:PrimarySkills = {
+            Attack: 1,
+            Defence:1,
+            SpellPower:1,
+            Knowledge:1,
+         }
+
+         result.Attack = buffer[heroIndex + primarySkillsOffset];
+         result.Defence = buffer[heroIndex + primarySkillsOffset+1];
+         result.SpellPower = buffer[heroIndex + primarySkillsOffset+2];
+         result.Knowledge = buffer[heroIndex + primarySkillsOffset+3];
+
+         return result;
     }
     
 }

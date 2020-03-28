@@ -41,8 +41,17 @@ const createDir = async function(dirPath:string) {
     });
   }
 
+const saveTextFile = async function(path:string, text:string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    fs.appendFile(path, text, ()=> {
+        resolve();
+    });
+  });
+}
+
   export {
       createDir,
       moveFile,
       readFile,
+      saveTextFile,
   }
